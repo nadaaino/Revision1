@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Biology Assessment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #f4f7f6; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { background: #ffffff; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); width: 100%; max-width: 800px; padding: 40px; }
+        h2 { margin-top: 0; color: #2c3e50; }
+        .hidden { display: none !important; }
+        #student-name { width: 100%; padding: 15px; margin: 20px 0; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1.1em; transition: border-color 0.3s; }
+        #student-name:focus { outline: none; border-color: #3498db; }
+        .btn-main { background: #3498db; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer; width: 100%; transition: background 0.3s; }
+        .btn-main:hover { background: #2980b9; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 30px; }
+        .tracker { font-weight: 600; color: #7f8c8d; }
+        .timer { font-size: 1.2em; font-weight: bold; color: #e74c3c; }
+        .question-title { font-size: 1.3em; font-weight: 600; margin-bottom: 20px; line-height: 1.5; color: #2c3e50; }
+        .option { display: block; background: #fdfdfd; border: 2px solid #e0e0e0; padding: 15px 20px; border-radius: 8px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; font-size: 1.05em; }
+        .option:hover { background: #f0f8ff; border-color: #baddf9; }
+        .option.selected { background: #3498db; color: #fff; border-color: #3498db; }
+        .navigation { display: flex; justify-content: space-between; margin-top: 30px; }
+        .nav-btn { background: #ecf0f1; color: #2c3e50; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600; transition: 0.2s; }
+        .nav-btn:hover { background: #bdc3c7; }
+        .nav-btn.submit-style { background: #2ecc71; color: white; }
+        .nav-btn.submit-style:hover { background: #27ae60; }
+        .nav-btn:disabled { opacity: 0; pointer-events: none; }
+        .result-item { margin-bottom: 20px; padding: 20px; border-radius: 8px; border-left: 6px solid #ddd; background: #fafafa; }
+        .result-item.correct { border-left-color: #2ecc71; }
+        .result-item.wrong { border-left-color: #e74c3c; }
+        .correct-ans { color: #27ae60; font-weight: bold; }
+        .wrong-ans { color: #e74c3c; font-weight: bold; }
+        .score-display { font-size: 1.5em; font-weight: bold; text-align: center; margin-bottom: 30px; color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="start-screen">
+            <h2>Comprehensive Assessment</h2>
+            <p>Please enter your name to begin the test. You will have exactly 235 minutes to complete the quiz.</p>
+            <input type="text" id="student-name" placeholder="Enter your full name" required>
+            <button id="start-btn" class="btn-main">Start Quiz (235 Minutes)</button>
+        </div>
+        <div id="quiz-container" class="hidden">
+            <div class="header">
+                <span id="question-tracker" class="tracker">Question 1 of 235</span>
+                <span class="timer" id="timer">235:00</span>
+            </div>
+            <div class="question-box">
+                <div id="question-text" class="question-title"></div>
+                <div id="options-container"></div>
+            </div>
+            <div class="navigation">
+                <button id="prev-btn" class="nav-btn">Previous</button>
+                <button id="next-btn" class="nav-btn">Next</button>
+                <button id="submit-btn" class="nav-btn submit-style hidden">Submit Quiz</button>
+            </div>
+        </div>
+        <div id="results-container" class="hidden"></div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const quizData = [
+                {q:"1. Which of the following correctly describes the structure of DNA?",o:["A) Single-stranded helix with ribose sugar and uracil bases","B) Double-stranded helix with deoxyribose sugar and thymine bases","C) Triple-stranded helix with deoxyribose sugar and uracil bases","D) Double-stranded linear molecule with ribose sugar and thymine bases"],a:1},
+                {q:"2. In DNA, adenine (A) always pairs with:",o:["A) Guanine (G) via 2 hydrogen bonds","B) Cytosine (C) via 3 hydrogen bonds","C) Thymine (T) via 2 hydrogen bonds","D) Thymine (T) via 3 hydrogen bonds"],a:2},
+                {q:"3. Which enzyme is responsible for untwisting the double helix and separating parental DNA strands during replication?",o:["A) DNA polymerase","B) Helicase","C) DNA ligase","D) Topoisomerase"],a:1},
+                {q:"4. The term 'semi-conservative replication' refers to the fact that:",o:["A) Each new DNA molecule consists of one original strand and one newly synthesized strand","B) Only half of the DNA molecule is replicated","C) Half of the nucleotides are conserved from the parent molecule","D) Replication occurs only during the S phase of interphase"],a:0},
+                {q:"5. Which enzyme synthesizes a short RNA primer required for DNA polymerases to initiate DNA synthesis?",o:["A) Helicase","B) Primase","C) DNA ligase","D) Topoisomerase"],a:1},
+                {q:"6. A nucleosome is composed of:",o:["A) DNA and polymerase enzymes","B) RNA wrapped around ribosomal proteins","C) DNA wound around histone proteins","D) Chromatin condensed into visible chromosomes"],a:2},
+                {q:"7. Which enzyme joins Okazaki fragments by catalyzing the formation of bonds between sugar-phosphate backbones?",o:["A) DNA polymerase III","B) DNA ligase","C) Primase","D) RNA polymerase"],a:1},
+                {q:"8. In DNA, the sugar component is:",o:["A) Deoxyribose","B) Glucose","C) Ribose","D) Sucrose"],a:0},
+                {q:"9. Which of the following base pairs has three hydrogen bonds?",o:["A) A-T","B) C-G","C) T-A","D) A-U"],a:1},
+                {q:"10. The 3' end of a DNA strand has:",o:["A) A phosphate group attached to the 3' carbon","B) A methyl group attached to the 3' carbon","C) A hydroxyl group attached to the 3' carbon","D) A nitrogenous base attached to the 3' carbon"],a:2},
+                {q:"11. During DNA replication, the strand that is synthesized continuously in the 5'→3' direction is called the:",o:["A) Lagging strand","B) Leading strand","C) Template strand","D) Coding strand"],a:1},
+                {q:"12. The enzyme topoisomerase functions to:",o:["A) Relieve supercoiling strain ahead of the replication fork","B) Synthesize RNA primers","C) Join Okazaki fragments","D) Proofread newly synthesized DNA"],a:0},
+                {q:"13. Which histone protein is responsible for fastening DNA against the nucleosome?",o:["A) H2A","B) H1","C) H3","D) H2B"],a:1},
+                {q:"14. In the Hershey-Chase experiment, what evidence supported DNA as the genetic material?",o:["A) Radioactive sulfur was found in bacterial cells","B) Both radioactive sulfur and phosphorus were found in bacterial cells","C) Radioactive phosphorus was found in bacterial cells","D) Neither radioactive isotope was found in bacterial cells"],a:2},
+                {q:"15. The sugar-phosphate backbone of DNA is held together by:",o:["A) Hydrogen bonds","B) Hydrophobic interactions","C) Ionic bonds","D) Phosphodiester bonds"],a:3},
+                {q:"16. If a DNA sample contains 22% guanine, what percentage of adenine would be present?",o:["A) 28%","B) 22%","C) 44%","D) 56%"],a:0},
+                {q:"17. Which enzyme is responsible for proofreading newly synthesized DNA and correcting mismatched nucleotides?",o:["A) Helicase","B) DNA polymerase","C) Primase","D) DNA ligase"],a:1},
+                {q:"18. The replication fork is:",o:["A) The site where transcription occurs","B) The location of the origin of replication","C) The Y-shaped region where parental DNA strands are separated","D) The structure formed by Okazaki fragments"],a:2},
+                {q:"19. Telomeres are:",o:["A) Enzymes that lengthen chromosomes","B) RNA primers used in DNA replication","C) Proteins that bind to origins of replication","D) Repetitive DNA sequences at the ends of linear chromosomes"],a:3},
+                {q:"20. In which direction does DNA polymerase synthesize new DNA strands?",o:["A) 5'→3' only","B) 3'→5' only","C) Both directions simultaneously","D) Random direction determined by template"],a:0},
+                {q:"21. Which of the following is a structural difference between RNA and DNA?",o:["A) RNA contains thymine while DNA contains uracil","B) RNA contains ribose sugar while DNA contains deoxyribose sugar","C) RNA is typically double-stranded while DNA is single-stranded","D) RNA is found only in the nucleus while DNA is found in the cytoplasm"],a:1},
+                {q:"22. The enzyme responsible for transcription is:",o:["A) DNA polymerase","B) Helicase","C) RNA polymerase","D) Reverse transcriptase"],a:2},
+                {q:"23. A sequence of three bases on mRNA that codes for a specific amino acid is called a:",o:["A) Triplet","B) Codon","C) Anticodon","D) Exon"],a:1},
+                {q:"24. Which type of RNA carries the genetic information from DNA to the ribosome?",o:["A) mRNA","B) tRNA","C) rRNA","D) snRNA"],a:0},
+                {q:"25. The anticodon is found on:",o:["A) mRNA","B) tRNA","C) rRNA","D) DNA"],a:1},
+                {q:"26. Which statement correctly describes ribosomal RNA (rRNA)?",o:["A) It carries amino acids to the ribosome","B) It carries genetic information from DNA to ribosomes","C) It makes up part of the structure of ribosomes","D) It is only found in the nucleus"],a:2},
+                {q:"27. The promoter region on DNA is:",o:["A) Where DNA replication begins","B) Where tRNAs bind during translation","C) Where the ribosome binds to mRNA","D) Where RNA polymerase attaches to initiate transcription"],a:3},
+                {q:"28. Which of the following is true about RNA polymerase?",o:["A) It can initiate synthesis without a primer","B) It requires a primer to initiate synthesis","C) It synthesizes DNA from an RNA template","D) It is involved in DNA repair"],a:0},
+                {q:"29. A transcription unit is defined as:",o:["A) The entire DNA molecule in a chromosome","B) The stretch of DNA that is transcribed into an RNA molecule","C) The ribosome binding site on mRNA","D) The complex of RNA polymerase and transcription factors"],a:1},
+                {q:"30. Which of the following best describes the structure of tRNA?",o:["A) Long linear strand with codons","B) Double-stranded helix","C) Clover-leaf shaped molecule with an anticodon","D) Circular molecule with catalytic activity"],a:2},
+                {q:"31. RNA splicing involves the removal of:",o:["A) Exons","B) Anticodons","C) Codons","D) Introns"],a:3},
+                {q:"32. The 5' cap added to eukaryotic mRNA functions to:",o:["A) Protect mRNA from degradation and assist in ribosome binding","B) Signal the end of transcription","C) Code for the first amino acid","D) Act as a primer for reverse transcription"],a:0},
+                {q:"33. The poly-A tail added to the 3' end of mRNA is important for:",o:["A) Catalyzing peptide bond formation","B) Initiating translation","C) Binding to tRNA","D) mRNA stability and export from the nucleus"],a:3},
+                {q:"34. Which type of RNA is the most abundant in a typical cell?",o:["A) rRNA","B) tRNA","C) mRNA","D) snRNA"],a:0},
+                {q:"35. Small nuclear RNAs (snRNAs) are involved in:",o:["A) DNA replication","B) Chromosome condensation","C) Protein transport","D) RNA splicing as part of spliceosomes"],a:3},
+                {q:"36. The E site on the ribosome is where:",o:["A) Discharged tRNA leaves","B) The growing polypeptide chain is held","C) Aminoacyl-tRNA enters","D) mRNA binds"],a:0},
+                {q:"37. Ribosomal subunits are assembled in which cellular compartment?",o:["A) Nucleus","B) Nucleolus","C) Cytoplasm","D) Golgi apparatus"],a:1},
+                {q:"38. Transcription factors are proteins that:",o:["A) Carry amino acids to ribosomes","B) Catalyze peptide bond formation","C) Bind to promoters and help initiate transcription","D) Splice pre-mRNA"],a:2},
+                {q:"39. Which statement about RNA structure is correct?",o:["A) RNA is always single-stranded and cannot form secondary structures","B) RNA is more stable than DNA","C) RNA contains thymine instead of uracil","D) RNA can fold into complex three-dimensional shapes due to base pairing within the molecule"],a:3},
+                {q:"40. Alternative splicing allows a single gene to:",o:["A) Be transcribed in both directions","B) Replicate more quickly","C) Produce multiple different mRNA transcripts and protein isoforms","D) Translate proteins without ribosomes"],a:2},
+                {q:"41. The start codon AUG codes for which amino acid?",o:["A) Tryptophan","B) Methionine","C) Stop","D) Serine"],a:1},
+                {q:"42. The genetic code is described as 'redundant' because:",o:["A) Some codons do not code for any amino acid","B) The same codon codes for different amino acids in different organisms","C) More than one codon can code for the same amino acid","D) DNA contains more nucleotides than are used"],a:2},
+                {q:"43. Translation occurs in which cellular location?",o:["A) Nucleus","B) Golgi apparatus","C) Mitochondria only","D) Ribosomes in the cytoplasm"],a:3},
+                {q:"44. Which of the following is NOT required for translation?",o:["A) mRNA","B) RNA polymerase","C) Ribosomes","D) tRNA"],a:1},
+                {q:"45. During translation, the growing polypeptide chain is held in which site on the ribosome?",o:["A) A site","B) P site","C) E site","D) Promoter site"],a:1},
+                {q:"46. How many possible codons exist in the genetic code?",o:["A) 20","B) 46","C) 64","D) 32"],a:2},
+                {q:"47. A gene is best defined as:",o:["A) The entire DNA molecule in a cell","B) A sequence of three bases on mRNA","C) A protein that regulates transcription","D) A section of DNA that codes for a particular polypeptide"],a:3},
+                {q:"48. During translation, the A site on the ribosome:",o:["A) Holds the tRNA carrying the next amino acid to be added","B) Holds the tRNA attached to the growing polypeptide","C) Is where discharged tRNA leaves the ribosome","D) Binds to the mRNA cap"],a:0},
+                {q:"49. Which of the following is a stop codon?",o:["A) AUG","B) UAA","C) GGG","D) CUG"],a:1},
+                {q:"50. The process of transcription produces:",o:["A) Proteins from an mRNA template","B) DNA from an RNA template","C) mRNA from a DNA template","D) Polypeptides from tRNA"],a:2},
+                {q:"51. A polysome is:",o:["A) A single ribosome translating multiple mRNAs","B) A complex of RNA polymerase and DNA","C) An organelle responsible for protein folding","D) Multiple ribosomes translating a single mRNA simultaneously"],a:3},
+                {q:"52. Chaperone proteins function to:",o:["A) Assist in the proper folding of newly synthesized polypeptides","B) Carry amino acids to ribosomes","C) Degrade misfolded proteins","D) Transport proteins into the nucleus"],a:0},
+                {q:"53. The wobble hypothesis explains:",o:["A) How ribosomes move along mRNA","B) Why the genetic code is universal","C) How mutations are repaired","D) Why some tRNAs can recognize more than one codon"],a:3},
+                {q:"54. Which of the following is a post-translational modification?",o:["A) Phosphorylation of a protein","B) Splicing of introns","C) Addition of a 5' cap","D) Transcription of DNA"],a:0},
+                {q:"55. A signal sequence on a newly synthesized protein directs it to:",o:["A) The nucleus for degradation","B) The mitochondria for energy production","C) The ribosome for further translation","D) The endoplasmic reticulum for secretion or membrane insertion"],a:3},
+                {q:"56. The genetic code is nearly universal, meaning:",o:["A) The same codon specifies the same amino acid in almost all organisms","B) All organisms use exactly the same codons for every amino acid","C) All organisms have the same number of genes","D) The code is only used in prokaryotes"],a:0},
+                {q:"57. Aminoacyl-tRNA synthetases are enzymes that:",o:["A) Form peptide bonds","B) Attach amino acids to their corresponding tRNAs","C) Synthesize mRNA from DNA","D) Unwind DNA during replication"],a:1},
+                {q:"58. A nonsense mutation results in:",o:["A) A different amino acid being inserted","B) No change in the protein sequence","C) A premature stop codon and truncated protein","D) A frameshift that alters all downstream amino acids"],a:2},
+                {q:"59. The initiation complex in translation assembles around which codon?",o:["A) UAA","B) UAG","C) UGA","D) AUG"],a:3},
+                {q:"60. Peptidyl transferase activity is a function of:",o:["A) A protein enzyme in the small subunit","B) tRNA itself","C) The large ribosomal subunit's rRNA","D) mRNA"],a:2},
+                {q:"61. A cell with two sets of chromosomes (2n) is called:",o:["A) Haploid","B) Diploid","C) Triploid","D) Aneuploid"],a:1},
+                {q:"62. Human somatic cells contain how many chromosomes?",o:["A) 23","B) 44","C) 46","D) 48"],a:2},
+                {q:"63. Homologous chromosomes are:",o:["A) Two identical copies of the same chromosome joined by a centromere","B) The X and Y chromosomes in males","C) Chromosomes that have undergone crossing over","D) Chromosomes of the same size with genes for the same characteristics"],a:3},
+                {q:"64. Crossing over occurs during which stage of meiosis?",o:["A) Metaphase I","B) Prophase II","C) Prophase I","D) Anaphase I"],a:2},
+                {q:"65. The structure formed by two homologous pairs of sister chromatids during synapsis is called a:",o:["A) Bivalent","B) Tetrad","C) Chiasma","D) Karyotype"],a:1},
+                {q:"66. Independent assortment of chromosomes contributes to genetic variation because:",o:["A) Chromatids exchange pieces of DNA during prophase I","B) Sister chromatids separate randomly during anaphase II","C) Homologous pairs line up randomly at the metaphase plate","D) Crossing over occurs during prophase II"],a:2},
+                {q:"67. In oogenesis, the unequal division of cytoplasm during meiosis results in:",o:["A) Four equally sized functional eggs","B) Four sperm cells","C) Two eggs and two polar bodies","D) One large egg and polar bodies that degenerate"],a:3},
+                {q:"68. Which of the following correctly describes meiosis?",o:["A) Two divisions producing four haploid daughter cells","B) One division producing two diploid daughter cells","C) One division producing four haploid daughter cells","D) Two divisions producing two diploid daughter cells"],a:0},
+                {q:"69. A karyotype is:",o:["A) The complete set of genes in an organism","B) The process of chromosome division during meiosis","C) A mutation involving an extra chromosome","D) A picture of the physical appearance of an individual's chromosomes"],a:3},
+                {q:"70. In humans, the sex chromosomes in a male are:",o:["A) XX","B) XO","C) XY","D) YY"],a:2},
+                {q:"71. Synapsis of homologous chromosomes occurs during which substage of prophase I?",o:["A) Leptotene","B) Pachytene","C) Diplotene","D) Zygotene"],a:3},
+                {q:"72. The chiasma (chiasmata) is the:",o:["A) Point of attachment of sister chromatids","B) Structure that separates chromosomes during anaphase","C) Site of crossing over between non-sister chromatids","D) Region where the nuclear envelope reforms"],a:2},
+                {q:"73. In spermatogenesis, how many functional sperm cells are produced from one primary spermatocyte?",o:["A) 1","B) 4","C) 2","D) 8"],a:1},
+                {q:"74. Oogenesis in humans begins:",o:["A) At puberty","B) At menopause","C) During fetal development","D) At fertilization"],a:2},
+                {q:"75. A polar body is:",o:["A) A functional egg cell","B) A sperm precursor","C) A type of chromosome mutation","D) A small non-functional cell produced during oogenesis"],a:3},
+                {q:"76. Which of the following correctly describes the ploidy of a human secondary oocyte?",o:["A) Haploid (n)","B) Diploid (2n)","C) Triploid (3n)","D) Tetraploid (4n)"],a:0},
+                {q:"77. Random orientation of homologous pairs on the metaphase plate is a source of genetic variation known as:",o:["A) Crossing over","B) Independent assortment","C) Nondisjunction","D) Cytokinesis"],a:1},
+                {q:"78. In which phase of meiosis do sister chromatids separate?",o:["A) Anaphase I","B) Telophase I","C) Anaphase II","D) Metaphase II"],a:2},
+                {q:"79. A cell with a diploid number of 14 undergoes meiosis. How many chromosomes will each daughter cell have after meiosis I?",o:["A) 14","B) 28","C) 4","D) 7"],a:3},
+                {q:"80. The reduction division in meiosis occurs during:",o:["A) Anaphase I","B) Prophase I","C) Anaphase II","D) Telophase II"],a:0},
+                {q:"81. A point mutation that replaces one nucleotide with another is called a:",o:["A) Frameshift mutation","B) Base-pair substitution","C) Deletion mutation","D) Translocation"],a:1},
+                {q:"82. Sickle cell disease is caused by:",o:["A) A frameshift mutation in the hemoglobin gene","B) A chromosomal deletion","C) A point mutation in the beta chain of hemoglobin","D) Non-disjunction of chromosome 21"],a:2},
+                {q:"83. Which of the following is an example of a mutagen?",o:["A) DNA polymerase","B) Ribosomes","C) Amino acids","D) Ultraviolet radiation"],a:3},
+                {q:"84. A frameshift mutation is caused by:",o:["A) Insertion or deletion of nucleotides","B) Replacement of one nucleotide with another","C) Inversion of a chromosome segment","D) Non-disjunction during meiosis"],a:0},
+                {q:"85. Down syndrome (Trisomy 21) is caused by:",o:["A) A point mutation on chromosome 21","B) Non-disjunction resulting in an extra chromosome 21","C) Deletion of part of chromosome 21","D) Translocation involving chromosome 21"],a:1},
+                {q:"86. Klinefelter syndrome is characterized by which sex chromosome composition?",o:["A) XO","B) XXX","C) XXY","D) XYY"],a:2},
+                {q:"87. Which statement about mutations is correct?",o:["A) All mutations are harmful to the organism","B) Mutations only occur in response to environmental stress","C) Mutations cannot be passed to offspring","D) Most mutations are either harmful or neutral"],a:3},
+                {q:"88. Polyploidy is more common in plants than animals because:",o:["A) Plants can tolerate extra chromosome sets more easily","B) Plants have more chromosomes","C) Animals do not undergo meiosis","D) Plants lack DNA repair mechanisms"],a:0},
+                {q:"89. Translocation as a chromosome mutation involves:",o:["A) Loss of a chromosome segment","B) Movement of a chromosome segment to another chromosome","C) Reversal of a chromosome segment","D) Duplication of a chromosome segment"],a:1},
+                {q:"90. Which of the following is true about mutations in asexual organisms?",o:["A) They cannot occur because there is no sexual reproduction","B) They are always lethal","C) They are the only source of genetic variation","D) They are repaired before being passed on"],a:2},
+                {q:"91. A deletion mutation that removes three nucleotides that are not a multiple of three will cause:",o:["A) No effect because only one amino acid is lost","B) A silent mutation","C) An inversion","D) A frameshift affecting all subsequent amino acids"],a:3},
+                {q:"92. Which of the following is an example of a chemical mutagen?",o:["A) Formalin (methanol)","B) X-rays","C) Ultraviolet light","D) Gamma rays"],a:0},
+                {q:"93. Aneuploidy refers to:",o:["A) An extra complete set of chromosomes","B) An abnormal number of individual chromosomes","C) A change in the structure of a chromosome","D) A mutation in a single gene"],a:1},
+                {q:"94. Turner syndrome (XO) results from:",o:["A) A point mutation on the Y chromosome","B) Deletion of the X chromosome","C) Non-disjunction of the X chromosome","D) Duplication of chromosome 21"],a:2},
+                {q:"95. Which type of mutation is most likely to have a severe effect on protein function?",o:["A) Silent mutation","B) Frameshift mutation near the start of the gene","C) Missense mutation in a non-conserved region","D) Mutation in an intron"],a:1},
+                {q:"96. A mutation that changes a codon from UUU (Phe) to UUC (Phe) is called:",o:["A) Silent mutation","B) Nonsense mutation","C) Missense mutation","D) Frameshift mutation"],a:0},
+                {q:"97. The term 'mutagen' refers to:",o:["A) A gene that repairs DNA damage","B) An agent that increases the rate of mutation","C) A protein that causes cell death","D) An enzyme that cuts DNA"],a:1},
+                {q:"98. Polyploidy is a condition where an organism has:",o:["A) More than two complete sets of chromosomes","B) Two sets of chromosomes","C) One set of chromosomes","D) Missing one chromosome from a pair"],a:0},
+                {q:"99. An advantageous mutation is one that:",o:["A) Always causes a visible change in phenotype","B) Is never passed to offspring","C) Occurs only in response to environmental pressure","D) Increases an organism's chance of survival and reproduction"],a:3},
+                {q:"100. Which of the following is a potential cause of spontaneous mutations?",o:["A) Exposure to UV radiation","B) Chemical carcinogens","C) Errors during DNA replication","D) X-rays"],a:2},
+                {q:"101. Restriction enzymes cut DNA at:",o:["A) Random locations throughout the genome","B) Specific recognition sequences","C) Any location with adenine-thymine base pairs","D) The ends of linear DNA molecules"],a:1},
+                {q:"102. The enzyme that joins DNA fragments together by forming covalent bonds is:",o:["A) Restriction enzyme","B) RNA polymerase","C) DNA ligase","D) Helicase"],a:2},
+                {q:"103. A plasmid is:",o:["A) A type of restriction enzyme","B) A viral genome","C) A bacterial ribosome","D) A small circular DNA molecule in bacteria"],a:3},
+                {q:"104. Recombinant DNA is formed by:",o:["A) Combining DNA from two different organisms","B) Natural crossing over during meiosis","C) Mutation of existing DNA","D) DNA replication errors"],a:0},
+                {q:"105. 'Sticky ends' refer to:",o:["A) The ends of chromosomes that have been damaged","B) Single-stranded overhangs produced by some restriction enzymes","C) The binding site for RNA polymerase","D) tRNA molecules bound to amino acids"],a:1},
+                {q:"106. The first human protein produced using recombinant DNA technology was:",o:["A) Growth hormone","B) Hemoglobin","C) Insulin","D) Antibodies"],a:2},
+                {q:"107. CRISPR-Cas9 technology allows scientists to:",o:["A) Amplify DNA sequences exponentially","B) Separate DNA fragments by size","C) Produce recombinant plasmids","D) Edit specific DNA sequences in living cells"],a:3},
+                {q:"108. In the production of human insulin using bacteria, the insulin gene is inserted into:",o:["A) A bacterial plasmid vector","B) The bacterial chromosome","C) The bacterial cell membrane","D) A viral capsid"],a:0},
+                {q:"109. The Cas9 protein in CRISPR technology functions as:",o:["A) A DNA ligase","B) A nuclease that cuts DNA","C) An RNA polymerase","D) A DNA helicase"],a:1},
+                {q:"110. Transformation in bacterial biotechnology refers to:",o:["A) Mutation of bacterial DNA","B) Production of proteins by bacteria","C) Uptake of plasmid DNA by bacterial cells","D) Cell division of bacteria"],a:2},
+                {q:"111. Restriction enzymes are naturally produced by bacteria as a defense mechanism against:",o:["A) Other bacteria","B) Antibiotics","C) Fungi","D) Bacteriophages (viruses)"],a:3},
+                {q:"112. A recognition site for a restriction enzyme is typically:",o:["A) A palindromic sequence of 4-8 base pairs","B) A single nucleotide long","C) Randomly distributed throughout the genome","D) Located only in plasmid DNA"],a:0},
+                {q:"113. Which of the following best describes the function of a selectable marker (e.g., antibiotic resistance gene) in a plasmid vector?",o:["A) It allows visualization of the DNA under UV light","B) It enables selection of bacteria that have taken up the plasmid","C) It cuts the plasmid at specific sites","D) It amplifies the gene of interest"],a:1},
+                {q:"114. The origin of replication (ori) on a plasmid is:",o:["A) The site where restriction enzymes cut","B) The gene for antibiotic resistance","C) The sequence where DNA replication begins","D) The promoter for transcription"],a:2},
+                {q:"115. CRISPR arrays in bacteria contain spacer sequences that:",o:["A) Code for Cas9 protein","B) Are identical to the bacterial genome","C) Are random and have no function","D) Match DNA sequences from viruses that previously attacked the bacteria"],a:3},
+                {q:"116. Which component of the CRISPR-Cas9 system is responsible for recognizing the target DNA sequence?",o:["A) Guide RNA (gRNA)","B) Cas9 protein alone","C) The PAM sequence","D) The target DNA's secondary structure"],a:0},
+                {q:"117. The PAM sequence in CRISPR-Cas9 is important because:",o:["A) It is the site where Cas9 cuts","B) It distinguishes self from non-self DNA","C) It binds to the guide RNA","D) It is the origin of replication"],a:1},
+                {q:"118. Recombinant DNA technology was first used to produce human insulin in:",o:["A) 1978","B) 1922","C) 1963","D) 1990"],a:0},
+                {q:"119. A cDNA (complementary DNA) library is made by:",o:["A) Directly cloning genomic DNA","B) Cutting DNA with restriction enzymes","C) Amplifying DNA with PCR","D) Reverse transcribing mRNA into DNA"],a:3},
+                {q:"120. Which enzyme is used to synthesize cDNA from mRNA?",o:["A) Reverse transcriptase","B) RNA polymerase","C) DNA polymerase","D) Restriction enzyme"],a:0},
+                {q:"121. Which of the following is an example of naturally occurring cloning?",o:["A) Production of human insulin in bacteria","B) Identical twins in humans","C) PCR amplification of DNA","D) Gel electrophoresis"],a:1},
+                {q:"122. Reproductive cloning involves:",o:["A) Producing copies of genes or DNA segments","B) Producing stem cells for therapeutic purposes","C) Producing copies of whole animals","D) Producing copies of plasmids"],a:2},
+                {q:"123. Dolly the sheep was cloned using:",o:["A) A sperm cell and an egg cell","B) Embryo splitting","C) Gene editing with CRISPR","D) A somatic cell nucleus transferred into an enucleated egg"],a:3},
+                {q:"124. Why is cloning primates more difficult than cloning other mammals?",o:["A) Spindle proteins are located close to chromosomes in primate eggs","B) Primate eggs are too small to manipulate","C) Primates have more chromosomes","D) Primate cells divide too quickly"],a:0},
+                {q:"125. Induced pluripotent stem cells (iPS cells) are produced by:",o:["A) Isolating cells from human embryos","B) Reprogramming adult skin cells using genetic engineering","C) Collecting cells from umbilical cord blood","D) Cloning whole animals"],a:1},
+                {q:"126. Therapeutic cloning aims to:",o:["A) Produce genetically identical animals for research","B) Amplify DNA for forensic testing","C) Create embryonic stem cells with the same DNA as the donor","D) Produce human insulin"],a:2},
+                {q:"127. The richest source of undifferentiated stem cells is:",o:["A) Adult bone marrow","B) The inner cell mass of an early embryo","C) Umbilical cord blood","D) Induced pluripotent stem cells"],a:1},
+                {q:"128. A concern regarding the use of stem cells for therapy is that:",o:["A) Stem cells may accumulate mutations that could lead to cancer","B) Stem cells cannot divide in the laboratory","C) Stem cells only produce blood cells","D) Stem cells are rejected by the immune system"],a:0},
+                {q:"129. The efficiency of reproductive cloning is demonstrated by the fact that Dolly was:",o:["A) The first clone ever produced","B) The only clone to be born live out of 276 cloned embryos","C) Cloned from an embryonic stem cell","D) Genetically identical to the egg donor"],a:1},
+                {q:"130. Cloned animals may not look identical because:",o:["A) They have different nuclear DNA","B) They are always different sexes","C) Environmental factors and developmental processes influence appearance","D) Cloning introduces random mutations"],a:2},
+                {q:"131. Which statement about adult stem cells is true?",o:["A) They are totipotent and can form any cell type","B) They are only found in embryos","C) They cannot be cultured in the laboratory","D) They are multipotent and can form a limited range of cell types"],a:3},
+                {q:"132. Umbilical cord blood stem cells are considered advantageous because:",o:["A) They are immature and may be more plastic than adult stem cells","B) They are more pluripotent than embryonic stem cells","C) They can only form blood cells","D) They are ethically controversial"],a:0},
+                {q:"133. Somatic cell nuclear transfer (SCNT) involves:",o:["A) Fusing two somatic cells together","B) Transferring a somatic cell nucleus into an enucleated egg","C) Injecting DNA into a fertilized egg","D) Splitting an early embryo into multiple parts"],a:1},
+                {q:"134. One reason cloned animals often have health problems is:",o:["A) They have too many chromosomes","B) They lack mitochondrial DNA","C) The donor nucleus may have shortened telomeres","D) They are always the wrong sex"],a:2},
+                {q:"135. Therapeutic cloning differs from reproductive cloning in that therapeutic cloning:",o:["A) Produces a whole organism","B) Uses adult stem cells instead of embryonic cells","C) Does not require a nucleus donor","D) Is intended to produce stem cells for research or therapy, not a live birth"],a:3},
+                {q:"136. Which of the following is a potential application of therapeutic cloning?",o:["A) Growing healthy tissues to replace injured or diseased tissues","B) Producing genetically identical livestock for food","C) Creating new plant varieties","D) Amplifying DNA for forensic analysis"],a:0},
+                {q:"137. The main ethical concern regarding embryonic stem cell research is:",o:["A) The cost of the research","B) The destruction of human embryos to obtain stem cells","C) The low success rate","D) The risk of contamination"],a:1},
+                {q:"138. In the cloning process that produced Dolly, the egg cell came from:",o:["A) The same individual as the somatic cell donor","B) A male sheep","C) A different breed of sheep than the donor","D) A different species (goat)"],a:2},
+                {q:"139. Induced pluripotent stem cells are considered revolutionary because they:",o:["A) Are derived from human embryos","B) Are totipotent","C) Do not require any genetic modification","D) Can be made from adult cells, avoiding ethical issues of embryonic stem cells"],a:3},
+                {q:"140. How many attempts were required to successfully clone Dolly the sheep?",o:["A) 276","B) 100","C) 1","D) 500"],a:0},
+                {q:"141. The polymerase chain reaction (PCR) is used to:",o:["A) Separate DNA fragments by size","B) Amplify specific DNA sequences","C) Cut DNA at specific sequences","D) Join DNA fragments together"],a:1},
+                {q:"142. In gel electrophoresis, DNA fragments move toward the positive electrode because:",o:["A) DNA is positively charged","B) DNA is neutral","C) DNA is negatively charged","D) The gel creates an electrical gradient"],a:2},
+                {q:"143. In gel electrophoresis, shorter DNA fragments:",o:["A) Move slower and travel less distance than longer fragments","B) Move at the same speed as longer fragments","C) Do not move through the gel","D) Move faster and travel further than longer fragments"],a:3},
+                {q:"144. DNA fingerprinting is used for all of the following EXCEPT:",o:["A) Treating genetic diseases","B) Paternity testing","C) Forensic testing","D) Identifying dead bodies"],a:0},
+                {q:"145. Restriction fragment analysis can detect the sickle cell allele because:",o:["A) The sickle cell allele is longer than the normal allele","B) The mutation eliminates a restriction enzyme recognition site","C) The sickle cell allele contains more restriction sites","D) The mutation changes the DNA charge"],a:1},
+                {q:"146. Genome sequencing involves:",o:["A) Cutting DNA at specific recognition sequences","B) Separating DNA fragments by size","C) Determining the exact order of bases in an organism's DNA","D) Cloning entire organisms"],a:2},
+                {q:"147. In PCR, which enzyme is used to synthesize new DNA strands?",o:["A) DNA ligase","B) Restriction enzyme","C) RNA polymerase","D) Heat-stable DNA polymerase (Taq polymerase)"],a:3},
+                {q:"148. The exponential amplification of DNA in PCR occurs because:",o:["A) The reaction continues indefinitely","B) Multiple restriction enzymes cut the DNA","C) Each cycle doubles the amount of DNA","D) The DNA is labeled with fluorescent dyes"],a:2},
+                {q:"149. Which of the following must be known before genome sequencing can begin?",o:["A) The function of every gene","B) The DNA must be broken into shorter pieces","C) The chromosome number of the organism","D) The organism must be cloned"],a:1},
+                {q:"150. Genes account for what percentage of DNA in the human genome?",o:["A) More than 75%","B) 50%","C) Less than 25%","D) 100%"],a:2},
+                {q:"151. The three main steps of PCR in order are:",o:["A) Annealing, Denaturation, Extension","B) Extension, Denaturation, Annealing","C) Denaturation, Extension, Annealing","D) Denaturation, Annealing, Extension"],a:3},
+                {q:"152. The denaturation step in PCR involves heating the reaction to approximately:",o:["A) 94°C","B) 72°C","C) 50°C","D) 37°C"],a:0},
+                {q:"153. Taq polymerase is used in PCR because it is:",o:["A) Able to synthesize RNA","B) More accurate than other DNA polymerases","C) Able to cut DNA at specific sites","D) Heat-stable and can withstand the denaturation step"],a:3},
+                {q:"154. In gel electrophoresis, a DNA ladder is used to:",o:["A) Stain the DNA bands","B) Separate DNA from proteins","C) Estimate the size of unknown DNA fragments","D) Amplify the DNA sample"],a:2},
+                {q:"155. RFLP (Restriction Fragment Length Polymorphism) analysis detects:",o:["A) The presence of a specific gene","B) The exact DNA sequence of a gene","C) The amount of DNA in a sample","D) Variations in the length of restriction fragments due to mutations"],a:3},
+                {q:"156. Which of the following is required for Sanger DNA sequencing?",o:["A) Dideoxynucleotides (ddNTPs) that terminate chain elongation","B) Restriction enzymes","C) Reverse transcriptase","D) Ligase"],a:0},
+                {q:"157. The term 'junk DNA' refers to:",o:["A) DNA that has been damaged beyond repair","B) Non-coding DNA whose function is not yet fully understood","C) DNA that codes for harmful proteins","D) Telomeric DNA that shortens with age"],a:1},
+                {q:"158. Next-generation sequencing technologies have made genome sequencing:",o:["A) Slower and more expensive","B) Impossible for large genomes","C) Faster and cheaper","D) Only possible for bacteria"],a:2},
+                {q:"159. In DNA fingerprinting, the pattern of bands is unique to each individual because:",o:["A) Everyone has different restriction enzymes","B) DNA is amplified differently in each person","C) The gel electrophoresis conditions are unique to each sample","D) The number and size of repetitive DNA regions vary between individuals"],a:3},
+                {q:"160. Which of the following best describes the purpose of a DNA probe in Southern blotting?",o:["A) To hybridize with a complementary DNA sequence of interest","B) To cut DNA at specific sites","C) To amplify the DNA sample","D) To separate DNA fragments by size"],a:0},
+                {q:"161. The original source of energy for most ecosystems is:",o:["A) Chemical energy from the Earth's core","B) Light energy from the sun","C) Heat energy from geothermal vents","D) Mechanical energy from tides"],a:1},
+                {q:"162. Plants are called producers because they:",o:["A) Produce oxygen for animals to breathe","B) Produce more offspring than consumers","C) Convert light energy into chemical energy through photosynthesis","D) Produce soil nutrients for other organisms"],a:2},
+                {q:"163. A first-order consumer feeds on:",o:["A) Other consumers","B) Decomposers","C) Detritus","D) Producers"],a:3},
+                {q:"164. In a food web, trophic level refers to:",o:["A) The feeding position of an organism in the energy flow","B) The size of an organism","C) The habitat where an organism lives","D) The reproductive strategy of an organism"],a:0},
+                {q:"165. The majority of energy is lost between trophic levels as:",o:["A) Chemical energy in biomass","B) Waste heat from metabolism","C) Light energy from photosynthesis","D) Sound energy from animal communication"],a:1},
+                {q:"166. Biomagnification refers to:",o:["A) The increase in organism size up a food chain","B) The increase in energy available up a food chain","C) The increase in concentration of poisons up a food chain","D) The increase in species diversity up a food chain"],a:2},
+                {q:"167. An organism's ecological niche is:",o:["A) The physical location where it lives","B) The number of offspring it produces","C) The trophic level it occupies","D) Its role within a community including adaptations and behaviors"],a:3},
+                {q:"168. Which of the following is an abiotic factor in an ecosystem?",o:["A) Soil moisture","B) Predators","C) Producers","D) Decomposers"],a:0},
+                {q:"169. A food web is different from a food chain because a food web:",o:["A) Only includes producers and primary consumers","B) Consists of interconnected food chains","C) Shows energy loss between trophic levels","D) Only applies to aquatic ecosystems"],a:1},
+                {q:"170. Bioaccumulation occurs when:",o:["A) Energy is lost as heat during metabolism","B) Populations increase in size over time","C) A substance increases in concentration within an organism from food and environment","D) Species compete for the same resource"],a:2},
+                {q:"171. The 10% rule in ecology states that:",o:["A) 10% of species in an ecosystem are producers","B) 10% of the sun's energy is captured by photosynthesis","C) 10% of organisms survive to reproductive age","D) Only 10% of energy is transferred from one trophic level to the next"],a:3},
+                {q:"172. Primary productivity refers to:",o:["A) The rate at which producers convert solar energy into chemical energy","B) The rate at which consumers feed","C) The total biomass of decomposers","D) The number of trophic levels in a food web"],a:0},
+                {q:"173. Which of the following is a detritivore?",o:["A) A wolf","B) An earthworm","C) A tree","D) A mushroom (fungus)"],a:1},
+                {q:"174. The carbon cycle involves all of the following processes EXCEPT:",o:["A) Nitrogen fixation","B) Cellular respiration","C) Decomposition","D) Photosynthesis"],a:0},
+                {q:"175. Which trophic level typically has the largest biomass in a healthy ecosystem?",o:["A) Primary consumers","B) Producers","C) Secondary consumers","D) Tertiary consumers"],a:1},
+                {q:"176. An energy pyramid is always upright (broad at base, narrow at top) because:",o:["A) Energy is lost at each trophic level as heat","B) Producers are always larger than consumers","C) There are more species at lower trophic levels","D) Consumers eat more than producers"],a:0},
+                {q:"177. Chemosynthetic bacteria at deep-sea hydrothermal vents obtain energy by:",o:["A) Absorbing sunlight","B) Oxidizing inorganic compounds such as hydrogen sulfide","C) Feeding on organic matter","D) Photosynthesis using infrared light"],a:1},
+                {q:"178. Which statement about matter cycling in ecosystems is true?",o:["A) Matter flows in one direction like energy","B) Matter is lost as heat during trophic transfers","C) Matter is recycled within ecosystems","D) Producers create new matter from sunlight"],a:2},
+                {q:"179. Eutrophication of a lake is often caused by:",o:["A) Increased oxygen levels","B) Overfishing","C) Decreased water temperature","D) Excess nitrogen and phosphorus from fertilizers"],a:3},
+                {q:"180. The term 'biome' refers to:",o:["A) A major life zone characterized by vegetation type and climate","B) A single ecosystem","C) The community of decomposers","D) The energy flow through a food chain"],a:0},
+                {q:"181. Natality refers to:",o:["A) The death rate in a population","B) The birth rate in a population","C) The age structure of a population","D) The distribution pattern of a population"],a:1},
+                {q:"182. A quadrat is used to:",o:["A) Mark animals for recapture studies","B) Measure the age structure of a population","C) Sample populations within a defined area","D) Track animal movements"],a:2},
+                {q:"183. The mark-recapture method is most appropriate for:",o:["A) Counting sedentary organisms like plants","B) Measuring the distribution of soil nutrients","C) Determining the age of organisms","D) Estimating populations of highly mobile animals"],a:3},
+                {q:"184. In a mutualistic relationship:",o:["A) Both organisms benefit","B) One organism benefits and the other is unaffected","C) One organism benefits and the other is harmed","D) Both organisms are harmed"],a:0},
+                {q:"185. Parasitism differs from predation because parasites:",o:["A) Always kill their host","B) Typically live in or on their host and do not immediately kill it","C) Are always larger than their host","D) Only infect plants"],a:1},
+                {q:"186. A survivorship curve shows:",o:["A) The birth rate of a population over time","B) The distribution pattern of a population","C) The number of individuals that survive to any particular age","D) The carrying capacity of an environment"],a:2},
+                {q:"187. Amensalism is a relationship where:",o:["A) Both species benefit","B) Both species are inhibited","C) One species benefits and the other is unaffected","D) One species is inhibited while the other is unaffected"],a:3},
+                {q:"188. Clumped distribution in a population is most likely caused by:",o:["A) Patchy resource availability or social behavior","B) Territorial behavior","C) Uniform resource distribution","D) Random chance"],a:0},
+                {q:"189. Competition between members of the same species is called:",o:["A) Interspecific competition","B) Intraspecific competition","C) Mutualism","D) Commensalism"],a:1},
+                {q:"190. The tick bird removing parasites from a zebra, while alerting the zebra to danger and gaining food access, is an example of:",o:["A) Mutualism","B) Commensalism","C) Parasitism","D) Amensalism"],a:0},
+                {q:"191. The Lincoln-Petersen index for mark-recapture is: N = (M × C) / R. If 50 animals are marked, 100 are captured in the second sample, and 20 are recaptures, what is the estimated population size?",o:["A) 100","B) 500","C) 250","D) 1000"],a:2},
+                {q:"192. A Type I survivorship curve is characterized by:",o:["A) Most individuals surviving to old age before rapid death","B) Constant mortality rate throughout life","C) High mortality early in life","D) Equal chance of death at any age"],a:0},
+                {q:"193. Which of the following organisms would most likely exhibit a Type III survivorship curve?",o:["A) Humans","B) Fish that produce many eggs with little parental care","C) Elephants","D) Birds"],a:1},
+                {q:"194. Allelopathy is an example of:",o:["A) Amensalism","B) Commensalism","C) Mutualism","D) Parasitism"],a:0},
+                {q:"195. A line transect is used in ecology to:",o:["A) Capture and mark animals","B) Measure the birth rate of a population","C) Determine the age structure of a population","D) Sample organisms along a straight line at regular intervals"],a:3},
+                {q:"196. The carrying capacity (K) of an environment is:",o:["A) The minimum population size needed to avoid extinction","B) The growth rate of a population","C) The maximum population size an environment can sustain","D) The number of species in an ecosystem"],a:2},
+                {q:"197. Which population distribution pattern is most commonly observed in nature?",o:["A) Random","B) Clumped","C) Uniform","D) Spiral"],a:1},
+                {q:"198. In a predator-prey relationship, as the prey population increases, the predator population typically:",o:["A) Decreases immediately","B) Remains constant","C) Increases after a time lag","D) Becomes extinct"],a:2},
+                {q:"199. A population that is growing exponentially will have a:",o:["A) Declining growth rate","B) J-shaped curve when plotted over time","C) Constant growth rate regardless of population size","D) S-shaped curve when plotted over time"],a:1},
+                {q:"200. The age structure of a population with a broad base (many young individuals) and narrow top (few old individuals) indicates:",o:["A) A rapidly growing population","B) A stable population","C) A declining population","D) An aging population"],a:0},
+                {q:"201. A scientist discovers a new compound that specifically inhibits the enzyme primase. Which cellular process would be most directly affected?",o:["A) Transcription of mRNA","B) DNA replication","C) Translation of proteins","D) RNA splicing"],a:1},
+                {q:"202. If a mutation occurred in the gene encoding the lac operon repressor protein in bacteria, which of the following would be a likely consequence on protein synthesis?",o:["A) Ribosomes would be unable to bind to mRNA","B) tRNA would not be able to carry amino acids","C) Transcription of certain genes might occur continuously","D) DNA replication would stop"],a:2},
+                {q:"203. A patient presents with a condition caused by a mitochondrial DNA mutation. If this patient has children, which inheritance pattern would be expected and why?",o:["A) Only male children will inherit the condition because mitochondria are in sperm","B) Only female children will inherit the condition because they produce eggs","C) Neither male nor female children will inherit the condition because mitochondrial DNA is not inherited","D) All children will inherit the condition because mitochondria are inherited from the egg"],a:3},
+                {q:"204. A researcher is studying an organism where 28% of the nucleotides contain thymine. Based on this information, what percentage of nucleotides would contain guanine?",o:["A) 22%","B) 28%","C) 44%","D) Cannot be determined from the information given"],a:0},
+                {q:"205. How would the complete inhibition of DNA ligase affect DNA replication in a eukaryotic cell?",o:["A) Replication would not initiate","B) Okazaki fragments on the lagging strand would not be joined","C) The leading strand would not be synthesized","D) The DNA double helix would not unwind"],a:1},
+                {q:"206. A scientist uses CRISPR-Cas9 to edit a gene in a mouse embryo. If the edit is successful in all cells, but the mouse appears normal, which of the following is the most likely explanation?",o:["A) The edited gene was not expressed in the cells examined","B) The mutation was corrected by DNA repair enzymes","C) The edited gene codes for a protein with functional redundancy","D) The mouse is still an embryo"],a:2},
+                {q:"207. Compare the processes of binary fission in bacteria and mitosis in eukaryotes. Which statement best describes a key difference in their outcomes?",o:["A) Binary fission produces genetically identical daughter cells while mitosis does not","B) Binary fission produces four daughter cells while mitosis produces two","C) Mitosis requires DNA replication while binary fission does not","D) Mitosis involves the division of a nucleus followed by cytokinesis; binary fission does not have a true nucleus"],a:3},
+                {q:"208. If an ecosystem experienced the complete removal of all decomposers, which of the following would be the most immediate consequence?",o:["A) Nutrients would not be recycled back to producers","B) Energy flow from the sun would stop","C) Producers would increase due to reduced competition","D) Primary consumers would become producers"],a:0},
+                {q:"209. A point mutation occurs in the promoter region of a gene essential for cell division. How would this mutation most likely affect the cell?",o:["A) The gene would code for a different protein","B) Transcription of the gene would be reduced or eliminated","C) The gene would be replicated incorrectly during S phase","D) The gene's mRNA would not be translated"],a:1},
+                {q:"210. A farmer observes that pest insects in a field are no longer killed by a commonly used pesticide. Analysis reveals a mutation in the pest population. This situation is best explained by:",o:["A) The pesticide caused the mutation in individual insects","B) The pesticide changed the DNA of all insects in the population","C) A pre-existing mutation conferring resistance increased in frequency due to natural selection","D) Insects learned to avoid the pesticide"],a:2},
+                {q:"211. A cell undergoing meiosis is observed under a microscope. Homologous chromosomes are paired and crossing over is visible. The nuclear envelope has disappeared. Which stage of meiosis is this cell in?",o:["A) Metaphase I","B) Prophase II","C) Anaphase I","D) Prophase I"],a:3},
+                {q:"212. How would a toxin that inhibits ATP synthase affect the light-dependent reactions of photosynthesis?",o:["A) The production of ATP would be reduced, affecting the Calvin cycle","B) The production of NADPH would increase","C) The Calvin cycle would continue normally","D) Splitting of water would stop immediately"],a:0},
+                {q:"213. A biologist is analyzing DNA samples using gel electrophoresis. The sample from a crime scene shows four bands, while a suspect's sample shows the same four bands. Which conclusion is most appropriate?",o:["A) The suspect is definitely guilty","B) The suspect's DNA matches the crime scene DNA at the tested loci","C) The suspect and the crime scene DNA are from different species","D) The suspect's DNA is completely different from the crime scene DNA"],a:1},
+                {q:"214. In a particular ecosystem, DDT levels are measured at 0.1 ppm in water, 2 ppm in phytoplankton, 25 ppm in small fish, and 200 ppm in large predatory birds. This pattern illustrates:",o:["A) Both bioaccumulation and biomagnification","B) Biomagnification only","C) Bioaccumulation only","D) Neither bioaccumulation nor biomagnification"],a:0},
+                {q:"215. A researcher introduces a plasmid containing a human insulin gene into E. coli bacteria. However, the bacteria fail to produce human insulin. Which of the following could explain this failure?",o:["A) The bacteria lack RNA polymerase","B) The bacteria cannot replicate the plasmid","C) The human gene is too large to be expressed","D) The human gene contains introns which bacteria cannot remove"],a:3},
+                {q:"216. Compare the roles of NAD+ in cellular respiration and NADP+ in photosynthesis. Which statement best describes their functional similarity?",o:["A) Both function as electron carriers","B) Both are permanently consumed during the reactions","C) Both are produced only in the mitochondria","D) Both are involved in ATP synthesis directly"],a:0},
+                {q:"217. A chemotherapeutic drug is designed to inhibit topoisomerase in rapidly dividing cancer cells. Why would this drug selectively affect cancer cells more than non-dividing cells?",o:["A) Topoisomerase is only present in cancer cells","B) Dividing cells require topoisomerase to relieve DNA supercoiling during replication","C) Non-dividing cells do not contain DNA","D) Topoisomerase is involved in transcription, not replication"],a:1},
+                {q:"218. A population of birds lives on an island with two food sources: large hard seeds and small soft seeds. Birds with large beaks can eat hard seeds; birds with small beaks eat soft seeds. If a drought kills all the soft-seed-producing plants, what would you expect to happen to the bird population over several generations?",o:["A) All birds will develop large beaks within their lifetime","B) All birds will switch to eating insects","C) The frequency of the large-beak allele will increase due to natural selection","D) The population will become extinct immediately"],a:2},
+                {q:"219. A mutation occurs in the gene encoding tRNA for the amino acid tryptophan. The mutated tRNA now carries alanine instead of tryptophan. How would this affect protein synthesis?",o:["A) No effect because the genetic code is redundant","B) Only proteins containing alanine would be affected","C) Transcription would stop at tryptophan codons","D) Tryptophan codons would be translated as alanine in all proteins"],a:3},
+                {q:"220. Compare the end products of anaerobic respiration in human muscle cells and in yeast. Which statement accurately describes a key difference in the context of ATP production?",o:["A) Human muscle cells produce lactic acid; yeast produces ethanol and CO2","B) Human muscle cells produce ethanol and CO2; yeast produces lactic acid","C) Both produce lactic acid, but humans produce more ATP","D) Yeast produces more ATP than human muscle cells during anaerobic conditions"],a:0},
+                {q:"221. A scientist is studying a newly discovered virus. The virus has RNA as its genetic material and an RNA-dependent RNA polymerase. Which of the following processes would this enzyme catalyze?",o:["A) DNA replication","B) RNA replication from an RNA template","C) Transcription of DNA to RNA","D) Reverse transcription"],a:1},
+                {q:"222. A patient has a mutation that prevents the formation of the 5' cap on mRNA. Which cellular process would be most directly impaired?",o:["A) Initiation of translation","B) RNA splicing","C) DNA replication","D) tRNA charging"],a:0},
+                {q:"223. If a bacterial cell is placed in a hypotonic solution and has a strong cell wall, what will happen?",o:["A) The cell will burst immediately","B) The cell will shrivel and undergo plasmolysis","C) No change will occur","D) The cell will become turgid but not burst due to the cell wall"],a:3},
+                {q:"224. A researcher observes that a population of bacteria is resistant to an antibiotic. Analysis shows the resistance gene is located on a plasmid. Which mechanism of horizontal gene transfer is most likely responsible for the spread of resistance?",o:["A) Transformation with environmental DNA","B) Transduction by a bacteriophage","C) Conjugation","D) Mutation of the bacterial chromosome"],a:2},
+                {q:"225. In a forest ecosystem, all the oak trees are removed by logging. Which of the following would be the most immediate effect on the food web?",o:["A) Secondary consumers would increase dramatically","B) Decomposers would have no role","C) The energy flow from the sun would stop","D) Primary consumers that feed on oak leaves would lose their food source"],a:3},
+                {q:"226. Compare the roles of restriction enzymes in bacteria and CRISPR-Cas9 in bacterial immunity. Which statement best describes a key similarity?",o:["A) Both systems use guide RNAs to find target sequences","B) Both systems require a PAM sequence","C) Both systems cleave foreign DNA at specific sequences","D) Both systems are found in all bacteria"],a:2},
+                {q:"227. A genetic disorder is caused by a mutation that results in the deletion of a single nucleotide in the first exon of a gene. How would this mutation affect the protein product?",o:["A) Only one amino acid would be changed","B) The protein would be produced normally","C) Transcription would not occur","D) The entire amino acid sequence after the mutation would be altered (frameshift)"],a:3},
+                {q:"228. A diploid organism has a haploid chromosome number of 8. How many chromatids would be present in a cell at metaphase I of meiosis?",o:["A) 32","B) 16","C) 8","D) 64"],a:0},
+                {q:"229. A sample of DNA is analyzed and found to contain 32% cytosine. What percentage of the DNA is thymine?",o:["A) 32%","B) 36%","C) 64%","D) 18%"],a:3},
+                {q:"230. In an ecosystem, a pesticide is applied that kills all the primary consumers. Which of the following would be the most likely long-term consequence?",o:["A) Producers would die due to lack of consumption","B) Decomposers would increase dramatically","C) Secondary consumers would lose their food source and decline","D) The energy flow would reverse direction"],a:2},
+                {q:"231. A scientist is using CRISPR to correct a mutation in a human gene. They design a guide RNA that is complementary to the target sequence. However, the Cas9 cuts at an unintended location. This is most likely due to:",o:["A) The PAM sequence being absent at the target site","B) Cas9 being inactivated","C) The target DNA being single-stranded","D) The guide RNA having partial complementarity to an off-target site"],a:3},
+                {q:"232. Compare binary fission in bacteria and mitosis in eukaryotes. Which of the following is a key similarity?",o:["A) Both require DNA replication before division","B) Both involve the formation of a mitotic spindle","C) Both involve the breakdown of the nuclear envelope","D) Both produce four daughter cells"],a:0},
+                {q:"233. A woman is a carrier for an X-linked recessive disorder. Her partner is unaffected (no mutation on his X chromosome). What is the probability that their son will be affected?",o:["A) 0%","B) 50%","C) 25%","D) 100%"],a:1},
+                {q:"234. A population of deer is introduced to an island with abundant food and no predators. The population grows rapidly, then stabilizes at a constant level. This stabilization is most likely due to:",o:["A) A decrease in the birth rate due to genetic mutations","B) The deer becoming extinct","C) The deer reaching the carrying capacity of the environment","D) The introduction of a new predator"],a:2},
+                {q:"235. A researcher wants to determine if a gene mutation affects the level of mRNA produced from that gene. Which technique would be most appropriate?",o:["A) Western blot to detect protein","B) Southern blot to detect DNA","C) Gel electrophoresis of genomic DNA","D) Northern blot or qPCR to detect RNA"],a:3}
+            ];
+
+            let currentQuestion = 0;
+            let userAnswers = {};
+            let timerInterval;
+            let totalTime = 235 * 60; // 235 minutes
+
+            const startScreen = document.getElementById("start-screen");
+            const quizContainer = document.getElementById("quiz-container");
+            const resultsContainer = document.getElementById("results-container");
+            const startBtn = document.getElementById("start-btn");
+            const nameInput = document.getElementById("student-name");
+            
+            const questionText = document.getElementById("question-text");
+            const optionsContainer = document.getElementById("options-container");
+            const tracker = document.getElementById("question-tracker");
+            const timerDisplay = document.getElementById("timer");
+            
+            const prevBtn = document.getElementById("prev-btn");
+            const nextBtn = document.getElementById("next-btn");
+            const submitBtn = document.getElementById("submit-btn");
+
+            startBtn.addEventListener("click", () => {
+                if (nameInput.value.trim() === "") {
+                    alert("Please enter your name to start the quiz.");
+                    return;
+                }
+                startScreen.classList.add("hidden");
+                quizContainer.classList.remove("hidden");
+                startTimer();
+                renderQuestion();
+            });
+
+            prevBtn.addEventListener("click", () => {
+                if (currentQuestion > 0) {
+                    currentQuestion--;
+                    renderQuestion();
+                }
+            });
+
+            nextBtn.addEventListener("click", () => {
+                if (currentQuestion < quizData.length - 1) {
+                    currentQuestion++;
+                    renderQuestion();
+                }
+            });
+
+            submitBtn.addEventListener("click", submitQuiz);
+
+            function startTimer() {
+                timerInterval = setInterval(() => {
+                    totalTime--;
+                    let minutes = Math.floor(totalTime / 60);
+                    let seconds = totalTime % 60;
+                    timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                    
+                    if (totalTime <= 0) {
+                        clearInterval(timerInterval);
+                        alert("Time is up! Submitting your answers automatically.");
+                        submitQuiz();
+                    }
+                }, 1000);
+            }
+
+            function renderQuestion() {
+                const qData = quizData[currentQuestion];
+                tracker.textContent = `Question ${currentQuestion + 1} of ${quizData.length}`;
+                questionText.textContent = qData.q;
+                optionsContainer.innerHTML = "";
+
+                qData.o.forEach((optText, index) => {
+                    const optDiv = document.createElement("div");
+                    optDiv.className = "option";
+                    if (userAnswers[currentQuestion] === index) {
+                        optDiv.classList.add("selected");
+                    }
+                    optDiv.textContent = optText;
+                    optDiv.addEventListener("click", () => selectOption(index));
+                    optionsContainer.appendChild(optDiv);
+                });
+
+                prevBtn.disabled = currentQuestion === 0;
+                
+                if (currentQuestion === quizData.length - 1) {
+                    nextBtn.classList.add("hidden");
+                    submitBtn.classList.remove("hidden");
+                } else {
+                    nextBtn.classList.remove("hidden");
+                    submitBtn.classList.add("hidden");
+                }
+            }
+
+            function selectOption(index) {
+                userAnswers[currentQuestion] = index;
+                renderQuestion(); 
+            }
+
+            function submitQuiz() {
+                clearInterval(timerInterval);
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Submitting...";
+
+                const studentName = nameInput.value.trim();
+                let score = 0;
+                let resultsHTML = `<h2>Quiz Results for ${studentName}</h2>`;
+                let detailsForEmail = `Student: ${studentName}\n\n`;
+
+                quizData.forEach((item, index) => {
+                    const studentAnsIndex = userAnswers[index];
+                    const isCorrect = studentAnsIndex === item.a;
+                    if (isCorrect) score++;
+
+                    const studentText = studentAnsIndex !== undefined ? item.o[studentAnsIndex] : "No Answer Selected";
+                    const correctText = item.o[item.a];
+
+                    detailsForEmail += `Q${index + 1}: ${item.q}\nStudent Answer: ${studentText}\nCorrect Answer: ${correctText}\n\n`;
+
+                    resultsHTML += `
+                        <div class="result-item ${isCorrect ? 'correct' : 'wrong'}">
+                            <p><strong>${item.q}</strong></p>
+                            <p>Your Answer: <span class="${isCorrect ? 'correct-ans' : 'wrong-ans'}">${studentText}</span></p>
+                            ${!isCorrect ? `<p>Correct Answer: <span class="correct-ans">${correctText}</span></p>` : ''}
+                        </div>
+                    `;
+                });
+
+                const finalScoreText = `${score} / ${quizData.length}`;
+                detailsForEmail = `Final Score: ${finalScoreText}\n\n` + detailsForEmail;
+                
+                resultsHTML = `<div class="score-display">Final Score: <span style="color: #3498db">${finalScoreText}</span></div>` + resultsHTML;
+
+                fetch("https://formspree.io/f/xgorlkjl", {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        name: studentName,
+                        score: finalScoreText,
+                        details: detailsForEmail
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        quizContainer.classList.add("hidden");
+                        resultsContainer.innerHTML = resultsHTML;
+                        resultsContainer.classList.remove("hidden");
+                    } else {
+                        alert("There was an issue submitting your answers. Please try again.");
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = "Submit Quiz";
+                    }
+                })
+                .catch(error => {
+                    alert("Network error. Please check your connection and try again.");
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Submit Quiz";
+                });
+            }
+        });
+    </script>
+</body>
+</html>
